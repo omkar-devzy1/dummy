@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { categories } from '../data/plants';
+import { categories as fallbackCategories } from '../data/plants';
+import { api } from '../api';
 
 export default function FeaturedCategories() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const [categories, setCategories] = useState(fallbackCategories);
+
+  useEffect(() => {
+    let active = true;
+    api.categories.list()
+      .then(({ categories }) => { if (active && categories?.length) setCategories(categories); })
+      .catch(() => { /* keep fallback data */ });
+    return () => { active = false; };
+  }, []);
 
   return (
     <section id="categories" className="py-24 bg-cream dark:bg-forest-950" ref={ref}>
@@ -34,7 +44,7 @@ export default function FeaturedCategories() {
           {categories.map((cat, i) => (
             <motion.a
               key={cat.id}
-              href="#"
+              href="#bestsellers"
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
@@ -89,7 +99,7 @@ export default function FeaturedCategories() {
           transition={{ delay: 0.7 }}
           className="text-center mt-10"
         >
-          <a href="#" className="btn-secondary text-sm">
+          <a href="#bestsellers" className="btn-secondary text-sm">
             View All Categories
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

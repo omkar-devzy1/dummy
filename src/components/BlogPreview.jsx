@@ -26,7 +26,7 @@ export default function BlogPreview() {
               <em className="italic text-sage-600 dark:text-sage-400">Green Guides</em>
             </h2>
           </div>
-          <a href="#" className="btn-secondary text-sm self-start md:self-auto">
+          <a href="#blog" className="btn-secondary text-sm self-start md:self-auto">
             View All Articles
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -38,7 +38,7 @@ export default function BlogPreview() {
           {blogPosts.map((post, i) => (
             <motion.a
               key={post.id}
-              href="#"
+              href="#blog"
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}

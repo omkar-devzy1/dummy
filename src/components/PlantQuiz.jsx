@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { quizQuestions } from '../data/plants';
+import { useApp } from '../context/AppContext';
 
 const recommendations = {
   default: {
@@ -36,6 +37,7 @@ const recommendations = {
 
 export default function PlantQuiz() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const { addToCart } = useApp();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -218,9 +220,12 @@ export default function PlantQuiz() {
                       </p>
                       <div className="flex items-center justify-between">
                         <span className="font-serif text-2xl text-forest-900 dark:text-cream">₹{result.price}</span>
-                        <a href="#categories" className="btn-primary text-xs px-5 py-2.5">
+                        <button
+                          onClick={() => addToCart({ id: `quiz-${result.name}`, name: result.name, price: result.price, image: result.image })}
+                          className="btn-primary text-xs px-5 py-2.5"
+                        >
                           Add to Cart
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { bestSellers } from '../data/plants';
 import { useApp } from '../context/AppContext';
+import { api } from '../api';
 
 function StarRating({ rating }) {
   return (
@@ -123,9 +124,19 @@ function PlantCard({ plant, index, inView }) {
 
 export default function BestSellers() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.05 });
+  // Fetch from the API; fall back to bundled data if the API is unavailable.
+  const [plants, setPlants] = useState(bestSellers);
+
+  useEffect(() => {
+    let active = true;
+    api.products.list()
+      .then(({ products }) => { if (active && products?.length) setPlants(products); })
+      .catch(() => { /* keep fallback data */ });
+    return () => { active = false; };
+  }, []);
 
   return (
-    <section className="py-24 bg-parchment dark:bg-forest-900" ref={ref}>
+    <section id="bestsellers" className="py-24 bg-parchment dark:bg-forest-900" ref={ref}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -147,7 +158,7 @@ export default function BestSellers() {
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
-          {bestSellers.map((plant, i) => (
+          {plants.map((plant, i) => (
             <PlantCard key={plant.id} plant={plant} index={i} inView={inView} />
           ))}
         </div>
@@ -158,7 +169,7 @@ export default function BestSellers() {
           transition={{ delay: 0.8 }}
           className="text-center mt-12"
         >
-          <a href="#" className="btn-primary">
+          <a href="#categories" className="btn-primary">
             View All Plants
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />

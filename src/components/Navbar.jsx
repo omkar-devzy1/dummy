@@ -11,7 +11,7 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const { darkMode, setDarkMode, cartCount, setCartOpen } = useApp();
+  const { darkMode, setDarkMode, cartCount, setCartOpen, user, logout, setLoginOpen } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -36,7 +36,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo */}
-            <a href="#" className="flex items-center gap-2.5 group">
+            <a href="#home" className="flex items-center gap-2.5 group">
               <div className="w-9 h-9 rounded-full bg-forest-700 flex items-center justify-center group-hover:bg-forest-600 transition-colors duration-300">
                 <svg viewBox="0 0 32 32" className="w-5 h-5 fill-cream">
                   <path d="M16 4 C10 4 7 11 9 18 C11 25 16 28 16 28 C16 28 21 25 23 18 C25 11 22 4 16 4Z" opacity="0.9"/>
@@ -118,6 +118,40 @@ export default function Navbar() {
                 )}
               </button>
 
+              {/* Account */}
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex w-9 h-9 rounded-full bg-forest-700 text-cream items-center justify-center text-xs font-semibold uppercase`}
+                    title={user.email}
+                  >
+                    {user.name?.[0] || user.email?.[0] || 'U'}
+                  </span>
+                  <button
+                    onClick={logout}
+                    className={`hidden sm:inline-flex font-sans text-xs font-medium transition-colors duration-300 ${
+                      scrolled ? 'text-forest-600 dark:text-sage-400 hover:text-forest-800' : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setLoginOpen(true)}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    scrolled
+                      ? 'hover:bg-forest-100 dark:hover:bg-forest-800 text-forest-700 dark:text-sage-300'
+                      : 'hover:bg-white/20 text-white'
+                  }`}
+                  aria-label="Sign in"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </button>
+              )}
+
               {/* CTA */}
               <a
                 href="#contact"
@@ -181,6 +215,21 @@ export default function Navbar() {
               >
                 Book Consultation
               </motion.a>
+              {user ? (
+                <button
+                  onClick={() => { logout(); setMobileOpen(false); }}
+                  className="py-3 mt-1 font-sans text-sm font-medium text-left text-forest-700 dark:text-sage-300"
+                >
+                  Logout ({user.name})
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setLoginOpen(true); setMobileOpen(false); }}
+                  className="py-3 mt-1 font-sans text-sm font-medium text-left text-forest-700 dark:text-sage-300"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </motion.div>
         )}

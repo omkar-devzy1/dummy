@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { api } from '../api';
 
 export default function CartDrawer() {
-  const { cart, cartOpen, setCartOpen, cartCount } = useApp();
+  const { cart, cartOpen, setCartOpen, cartCount, requireAuth, clearCart } = useApp();
+  const [placed, setPlaced] = useState(false);
+  const [order, setOrder] = useState(null);
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState('');
 
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+  const handleCheckout = () => {
+    setError('');
+    requireAuth(async () => {
+      setPlacing(true);
+      try {
+        const { order } = await api.orders.create(cart, total);
+        setOrder(order);
+        clearCart();
+        setPlaced(true);
+      } catch (err) {
+        setError(err.message || 'Checkout failed. Please try again.');
+      } finally {
+        setPlacing(false);
+      }
+    });
+  };
+
+  const closeDrawer = () => {
+    setCartOpen(false);
+    setPlaced(false);
+    setOrder(null);
+    setError('');
+  };
 
   return (
     <AnimatePresence>
@@ -16,7 +45,7 @@ export default function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setCartOpen(false)}
+            onClick={closeDrawer}
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
           />
 
@@ -37,7 +66,7 @@ export default function CartDrawer() {
                 )}
               </h2>
               <button
-                onClick={() => setCartOpen(false)}
+                onClick={closeDrawer}
                 className="w-8 h-8 rounded-full hover:bg-forest-100 dark:hover:bg-forest-700 flex items-center justify-center text-forest-500 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,13 +77,32 @@ export default function CartDrawer() {
 
             {/* Items */}
             <div className="flex-1 overflow-y-auto p-6">
-              {cart.length === 0 ? (
+              {placed ? (
+                <div className="text-center py-16">
+                  <div className="text-5xl mb-4">🌿</div>
+                  <h3 className="font-serif text-lg text-forest-800 dark:text-cream mb-2">Order placed!</h3>
+                  {order && (
+                    <p className="font-sans text-xs text-forest-500 dark:text-sage-400 mb-1">
+                      Order ID: <span className="font-semibold">{order.id}</span>
+                    </p>
+                  )}
+                  <p className="font-sans text-sm text-forest-400 mb-6">
+                    Thank you for your order. We'll reach out shortly with delivery details.
+                  </p>
+                  <button
+                    onClick={closeDrawer}
+                    className="btn-primary text-sm"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
+              ) : cart.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="text-5xl mb-4">🛒</div>
                   <h3 className="font-serif text-lg text-forest-800 dark:text-cream mb-2">Your cart is empty</h3>
                   <p className="font-sans text-sm text-forest-400 mb-6">Add some beautiful plants to get started!</p>
                   <button
-                    onClick={() => setCartOpen(false)}
+                    onClick={closeDrawer}
                     className="btn-primary text-sm"
                   >
                     Continue Shopping
@@ -79,7 +127,7 @@ export default function CartDrawer() {
             </div>
 
             {/* Footer */}
-            {cart.length > 0 && (
+            {!placed && cart.length > 0 && (
               <div className="border-t border-forest-100 dark:border-forest-700 p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="font-sans text-sm text-forest-600 dark:text-sage-400">Subtotal</span>
@@ -91,10 +139,15 @@ export default function CartDrawer() {
                   </svg>
                   Free delivery on this order
                 </div>
-                <button className="w-full btn-primary justify-center py-4">
-                  Checkout · ₹{total}
+                {error && <p className="font-sans text-xs text-red-500">{error}</p>}
+                <button
+                  onClick={handleCheckout}
+                  disabled={placing}
+                  className="w-full btn-primary justify-center py-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {placing ? 'Placing order…' : `Checkout · ₹${total}`}
                 </button>
-                <button onClick={() => setCartOpen(false)} className="w-full text-center font-sans text-sm text-forest-500 hover:text-forest-700 transition-colors">
+                <button onClick={closeDrawer} className="w-full text-center font-sans text-sm text-forest-500 hover:text-forest-700 transition-colors">
                   Continue Shopping
                 </button>
               </div>

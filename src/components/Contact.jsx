@@ -2,15 +2,27 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { site, waLink } from '../config/site';
+import { api } from '../api';
 
 export default function Contact() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.05 });
   const [form, setForm] = useState({ name: '', email: '', phone: '', service: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError('');
+    setSending(true);
+    try {
+      await api.contact.submit(form);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err.message || 'Could not send your message. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -207,12 +219,15 @@ export default function Contact() {
                       />
                     </div>
 
+                    {error && <p className="font-sans text-xs text-red-500">{error}</p>}
+
                     <motion.button
                       type="submit"
+                      disabled={sending}
                       whileTap={{ scale: 0.98 }}
-                      className="w-full btn-primary justify-center text-sm py-4"
+                      className="w-full btn-primary justify-center text-sm py-4 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Send Message
+                      {sending ? 'Sending…' : 'Send Message'}
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>

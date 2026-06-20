@@ -17,6 +17,7 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import FloatingWhatsApp from './components/FloatingWhatsApp';
 import CartDrawer from './components/CartDrawer';
+import LoginModal from './components/LoginModal';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
         <Footer />
         <FloatingWhatsApp />
         <CartDrawer />
+        <LoginModal />
       </div>
     </AppProvider>
   );

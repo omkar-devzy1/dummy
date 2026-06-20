@@ -1,21 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-
-const trackingSteps = [
-  { id: 1, label: 'Order Confirmed', icon: '✅', time: 'May 18, 9:00 AM', done: true },
-  { id: 2, label: 'Plants Prepared', icon: '🌿', time: 'May 18, 11:30 AM', done: true },
-  { id: 3, label: 'Out for Delivery', icon: '🚚', time: 'May 18, 2:00 PM', done: true, active: true },
-  { id: 4, label: 'Delivered', icon: '🏡', time: 'Expected by 6:00 PM', done: false },
-];
+import { api } from '../api';
 
 export default function DeliveryTracking() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
-  const [orderId, setOrderId] = useState('PRK-2024-08741');
-  const [tracked, setTracked] = useState(true);
+  const [orderId, setOrderId] = useState('PRK-2026-01001');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const tracked = !!result;
+
+  const handleTrack = async (id = orderId) => {
+    if (!id) return;
+    setError('');
+    setLoading(true);
+    try {
+      const data = await api.orders.track(id);
+      setResult(data);
+    } catch (err) {
+      setError(err.message || 'Could not fetch tracking. Please try again.');
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load a sample tracking on first view.
+  useEffect(() => { handleTrack(); /* eslint-disable-next-line */ }, []);
 
   return (
-    <section className="py-24 bg-parchment dark:bg-forest-900" ref={ref}>
+    <section id="tracking" className="py-24 bg-parchment dark:bg-forest-900" ref={ref}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left */}
@@ -80,12 +96,14 @@ export default function DeliveryTracking() {
                 />
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => setTracked(true)}
-                  className="btn-primary text-xs px-5 py-3 whitespace-nowrap"
+                  onClick={() => handleTrack()}
+                  disabled={loading}
+                  className="btn-primary text-xs px-5 py-3 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Track
+                  {loading ? 'Tracking…' : 'Track'}
                 </motion.button>
               </div>
+              {error && <p className="font-sans text-xs text-red-500 mt-2">{error}</p>}
             </div>
 
             {/* Result */}
@@ -99,11 +117,11 @@ export default function DeliveryTracking() {
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-forest-50 dark:border-forest-700">
                   <div>
                     <div className="font-sans text-xs text-forest-400 dark:text-sage-500">Order ID</div>
-                    <div className="font-sans text-sm font-semibold text-forest-900 dark:text-cream">{orderId}</div>
+                    <div className="font-sans text-sm font-semibold text-forest-900 dark:text-cream">{result.orderId}</div>
                   </div>
                   <div className="px-3 py-1.5 rounded-full bg-forest-50 dark:bg-forest-700 text-forest-700 dark:text-sage-300 text-xs font-sans font-semibold flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-forest-500 animate-pulse" />
-                    On the way
+                    {result.status}
                   </div>
                 </div>
 
@@ -115,8 +133,8 @@ export default function DeliveryTracking() {
                     <div className="font-sans text-sm font-semibold text-forest-900 dark:text-cream">Today by 6:00 PM</div>
                   </div>
                   <div className="ml-auto text-xs text-forest-400 dark:text-sage-500 text-right">
-                    <div>3 plants</div>
-                    <div className="font-medium text-forest-700 dark:text-sage-300">₹1,297</div>
+                    <div>{result.items} {result.items === 1 ? 'plant' : 'plants'}</div>
+                    <div className="font-medium text-forest-700 dark:text-sage-300">₹{result.total?.toLocaleString('en-IN')}</div>
                   </div>
                 </div>
 
@@ -126,7 +144,7 @@ export default function DeliveryTracking() {
                   <div className="absolute left-4 top-4 bottom-4 w-px bg-forest-100 dark:bg-forest-700" />
 
                   <div className="space-y-5">
-                    {trackingSteps.map((step, i) => (
+                    {result.steps.map((step, i) => (
                       <motion.div
                         key={step.id}
                         initial={{ opacity: 0, x: 10 }}
